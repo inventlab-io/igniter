@@ -5,7 +5,7 @@ Igniter is a tool for managing app configuration to support complex deployment r
 ## Features
 
 - Support for multi configuration storage
-    - ETCD
+    - etcd
     - BoltDb (TODO)
     - Filesystem (TODO)
     - Github (TODO)
@@ -15,8 +15,8 @@ Igniter is a tool for managing app configuration to support complex deployment r
 
 ## API
 
-- `/template/:repo/k/:path`
-- `/data/:repo/k/:path`
+- `/template/:store/k/:path`
+- `/data/:store/k/:path`
 - `/render/k/:path`
 - `/meta/k/:path`
 - `/policy/k/:path`

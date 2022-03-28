@@ -10,12 +10,14 @@ import (
 
 type Server struct {
 	config               config.ServerConfig
-	templateStoreFactory storage.StoreFactory
+	templateStoreFactory map[string]storage.StoreFactory
 }
 
 func (svr Server) Run(cfg config.ServerConfig) {
+
 	svr.config = cfg
-	svr.templateStoreFactory = etcd.StoreFactory
+	svr.templateStoreFactory = make(map[string]storage.StoreFactory)
+	svr.templateStoreFactory["etcd"] = etcd.StoreFactory
 
 	http.InitGin(func(e *gin.Engine) { initRoutes(e, svr) })
 }
@@ -23,14 +25,13 @@ func (svr Server) Run(cfg config.ServerConfig) {
 func (svr Server) Shutdown() {
 }
 
-func (svr Server) PutTemplate(path string, template string) string {
-	store := svr.templateStoreFactory(svr.config)
-
-	return store.PutTemplate(path, template)
+func (svr Server) PutTemplate(store string, path string, template string) string {
+	s := svr.templateStoreFactory[store](svr.config)
+	return s.PutTemplate(path, template)
 }
 
-func (svr Server) GetTemplate(path string) string {
-	store := svr.templateStoreFactory(svr.config)
-	r := store.GetTemplate(path)
+func (svr Server) GetTemplate(store string, path string) string {
+	s := svr.templateStoreFactory[store](svr.config)
+	r := s.GetTemplate(path)
 	return r
 }
