@@ -7,18 +7,15 @@ import (
 	"strings"
 )
 
-type AgentConfig struct {
-	Server struct {
-		Address string `mapstructure:"ADDRESS"`
-		Port    string `mapstructure:"PORT"`
-	}
-}
-
-func LoadAgentConfig(path string) (config AgentConfig, err error) {
+func LoadServerConfig(path string) (cfg ServerConfig, err error) {
 	agentV := viper.New()
 
-	agentV.SetDefault("Server.Address", "http://localhost")
-	agentV.SetDefault("Server.Port", 5050)
+	agentV.SetDefault("Storage", "etcd")
+	agentV.SetDefault("RequestTimeout", 2)
+	agentV.SetDefault("Etcd.Endpoints", []string{"127.0.0.1:2379"})
+	agentV.SetDefault("Etcd.ConnectionTimeout", 2)
+
+	agentV.SetConfigType("yaml")
 
 	if path != "" {
 
@@ -29,8 +26,9 @@ func LoadAgentConfig(path string) (config AgentConfig, err error) {
 
 		fn := strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
 		if fn == "" {
-			fn = "ignition"
+			fn = "igniter"
 		}
+
 		agentV.SetConfigName(fn)
 
 		err = agentV.ReadInConfig()
@@ -39,7 +37,7 @@ func LoadAgentConfig(path string) (config AgentConfig, err error) {
 		}
 	}
 
-	err = agentV.Unmarshal(&config)
+	err = agentV.Unmarshal(&cfg)
 
 	if err != nil {
 		panic(fmt.Errorf("Fatal error config file: %w \n", err))

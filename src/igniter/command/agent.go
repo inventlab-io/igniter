@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/igniter/agent"
-	"github.com/igniter/agent/config"
+	"github.com/igniter/config"
 	"io"
 	"log"
 )

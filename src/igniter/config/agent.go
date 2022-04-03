@@ -7,23 +7,12 @@ import (
 	"strings"
 )
 
-type ServerConfig struct {
-	RequestTimeout int
 
-	Etcd struct {
-		Endpoints         []string
-		ConnectionTimeout int
-	}
-}
-
-func LoadServerConfig(path string) (config ServerConfig, err error) {
+func LoadAgentConfig(path string) (config AgentConfig, err error) {
 	agentV := viper.New()
 
-	agentV.SetDefault("RequestTimeout", 2)
-	agentV.SetDefault("Etcd.Endpoints", []string{"127.0.0.1:2379"})
-	agentV.SetDefault("Etcd.ConnectionTimeout", 2)
-
-	agentV.SetConfigType("yaml")
+	agentV.SetDefault("Server.Address", "http://localhost")
+	agentV.SetDefault("Server.Port", 5050)
 
 	if path != "" {
 

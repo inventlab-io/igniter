@@ -3,8 +3,8 @@ package command
 import (
 	"flag"
 	"fmt"
+	"github.com/igniter/config"
 	"github.com/igniter/server"
-	"github.com/igniter/server/config"
 	"io"
 )
 
