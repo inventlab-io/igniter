@@ -4,18 +4,26 @@ Igniter is a tool for managing app configuration to support complex deployment r
 
 ## Features
 
-- Support for multi configuration storage
+- Path partitioned storage
+- Storage types
     - etcd
     - BoltDb (TODO)
     - Filesystem (TODO)
     - Github (TODO)
 - Support for dynamic secrets engines (TODO)
-    - Vault
-    - Generic (curl) 
+    - Vault (TODO)
+    - Generic (curl) (TODO)
+
+### Path partitioned storage
+Different storage can be used on different paths. If storage is specified in the `:store` parameter of `GET`, `PUT` API, the specified storage will be used. 
 
 ## API
 
+- `/options/template/k/:path`
+- `/options/template/:store/k/:path`
+- `/template/k/:path`
 - `/template/:store/k/:path`
+- `/data/k/:path`
 - `/data/:store/k/:path`
 - `/render/k/:path`
 - `/policy/k/:path`
