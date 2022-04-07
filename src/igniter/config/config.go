@@ -6,6 +6,10 @@ type EtcdOptions struct {
 	ConnectionTimeout int
 }
 
+type StoreOptions struct {
+	StorageType string
+}
+
 type ServerConfig struct {
 	RequestTimeout int
 	Storage        string

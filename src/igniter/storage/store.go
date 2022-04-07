@@ -1,6 +1,11 @@
 package storage
 
-import "github.com/igniter/config"
+import (
+	"encoding/json"
+	"github.com/igniter/config"
+)
+
+type ConfigRepoFactory func(cfg config.ServerConfig) ConfigRepo
 
 type TemplateStore interface {
 	PutTemplate(path string, template string) string
@@ -8,9 +13,22 @@ type TemplateStore interface {
 }
 
 type ConfigRepo interface {
-	GetTemplateStoreOptions(path string) string
-	PutTemplateStoreOptions(path string, optionsJson string) string
-	GetTemplateStore(path string) TemplateStore
+	GetStoreOptions(path string) []byte
+	PutStoreOptions(path string, optionsJson string) string
 }
 
-type ConfigRepoFactory func(cfg config.ServerConfig) ConfigRepo
+func GetTemplateStore(settingsJson []byte) TemplateStore {
+
+	var opt config.StoreOptions
+	json.Unmarshal(settingsJson, &opt)
+	var store TemplateStore
+
+	if opt.StorageType == "etcd" {
+		var etcdOpt config.EtcdOptions
+		json.Unmarshal(settingsJson, &etcdOpt)
+		json.Unmarshal(settingsJson, &etcdOpt)
+		store = etcdInitStore(etcdOpt)
+	}
+
+	return store
+}

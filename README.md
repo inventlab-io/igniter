@@ -18,9 +18,7 @@ Igniter is a tool for managing app configuration to support complex deployment r
 Different storage can be used on different paths. If storage is specified in the `:store` parameter of `GET`, `PUT` API, the specified storage will be used. 
 
 ## API
-
-- `/options/template/k/:path`
-- `/options/template/:store/k/:path`
+- `/options/store/k/:store`
 - `/template/k/:path`
 - `/template/:store/k/:path`
 - `/data/k/:path`

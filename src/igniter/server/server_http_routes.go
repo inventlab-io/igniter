@@ -7,10 +7,9 @@ import (
 )
 
 func initRoutes(r *gin.Engine, svr Server) {
-	r.GET("/options/template/k/*path", func(ctx *gin.Context) { getOptions(ctx, svr) })
-	r.PUT("/options/template/k/*path", func(ctx *gin.Context) { putOptions(ctx, svr) })
-	r.GET("/options/:store/template/k/*path", func(ctx *gin.Context) { getOptions(ctx, svr) })
-	r.PUT("/options/:store/template/k/*path", func(ctx *gin.Context) { putOptions(ctx, svr) })
+
+	r.GET("/options/store/k/:store", func(ctx *gin.Context) { getOptions(ctx, svr) })
+	r.PUT("/options/store/k/:store", func(ctx *gin.Context) { putOptions(ctx, svr) })
 
 	r.PUT("/template/k/*path", func(ctx *gin.Context) { putTemplate(ctx, svr) })
 	r.GET("/template/k/*path", func(ctx *gin.Context) { getTemplate(ctx, svr) })
@@ -20,20 +19,18 @@ func initRoutes(r *gin.Engine, svr Server) {
 
 func getOptions(ctx *gin.Context, svr Server) {
 	store := ctx.Param("store")
-	templatePath := ctx.Param("path")
-	result := svr.GetTemplateStoreOptions(store, templatePath)
-	ctx.String(http.StatusOK, result)
+	result := svr.GetStoreOptions(store)
+	ctx.String(http.StatusOK, string(result))
 }
 
 func putOptions(ctx *gin.Context, svr Server) {
 
 	store := ctx.Param("store")
-	templatePath := ctx.Param("path")
 	options, err := ctx.GetRawData()
 	if err != nil {
 		fmt.Errorf("Malformed template option request")
 	}
-	result := svr.PutTemplateStoreOptions(store, templatePath, string(options))
+	result := svr.PutStoreOptions(store, string(options))
 	ctx.String(http.StatusOK, result)
 }
 
