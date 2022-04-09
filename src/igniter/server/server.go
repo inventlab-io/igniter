@@ -113,10 +113,11 @@ func (svr Server) Render(store string, templatePath string, valuePaths []string)
 	vals := svr.GetValuesInBatch(store, valuePaths)
 
 	valMap := make(map[string]interface{})
-
-	for _, v := range vals {
+	for i := len(vals) - 1; i >= 0; i-- {
+		v := vals[i]
 		var vm map[string]interface{}
 		json.Unmarshal([]byte(v), &vm)
+
 		for k, v2 := range vm {
 			valMap[k] = v2
 		}
