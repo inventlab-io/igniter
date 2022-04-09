@@ -66,6 +66,12 @@ func (e *EtcdStore) PutTemplate(key string, template string) string {
 	return e.putData(templateKey, template)
 }
 
+// DeleteTemplate implements TemplateStore
+func (e EtcdStore) DeleteTemplate(key string) string {
+	templateKey := parseTemplateKey(key)
+	return string(e.deleteData(templateKey))
+}
+
 // GetValues implements ValuesStore
 func (e EtcdStore) GetValues(key string) string {
 	valuesKey := parseValuesKey(key)
@@ -76,6 +82,12 @@ func (e EtcdStore) GetValues(key string) string {
 func (e *EtcdStore) PutValues(key string, values string) string {
 	valuesKey := parseValuesKey(key)
 	return e.putData(valuesKey, values)
+}
+
+// DeleteValues implements ValuesStore
+func (e *EtcdStore) DeleteValues(key string) string {
+	valuesKey := parseValuesKey(key)
+	return e.deleteData(valuesKey)
 }
 
 func (e *EtcdStore) getData(key string) []byte {

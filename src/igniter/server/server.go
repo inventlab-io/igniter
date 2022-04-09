@@ -40,6 +40,12 @@ func (svr Server) PutTemplate(store string, path string, template string) string
 	return templateStore.PutTemplate(path, template)
 }
 
+func (svr Server) DeleteTemplate(store string, path string) string {
+	storeOpt := svr.GetStoreOptions(store)
+	templateStore := storage.GetTemplateStore(storeOpt)
+	return templateStore.DeleteTemplate(path)
+}
+
 func (svr Server) GetValues(store string, path string) string {
 	storeOpt := svr.GetStoreOptions(store)
 	valuesStore := storage.GetValuesStore(storeOpt)
@@ -50,6 +56,12 @@ func (svr Server) PutValues(store string, path string, values string) string {
 	storeOpt := svr.GetStoreOptions(store)
 	valuesStore := storage.GetValuesStore(storeOpt)
 	return valuesStore.PutValues(path, values)
+}
+
+func (svr Server) DeleteValues(store string, path string) string {
+	storeOpt := svr.GetStoreOptions(store)
+	valuesStore := storage.GetValuesStore(storeOpt)
+	return valuesStore.DeleteValues(path)
 }
 
 func (svr Server) GetStoreOptions(store string) config.StoreOptions {

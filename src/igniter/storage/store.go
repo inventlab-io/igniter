@@ -10,11 +10,13 @@ type ConfigRepoFactory func(cfg config.ServerConfig) ConfigRepo
 type TemplateStore interface {
 	PutTemplate(path string, template string) string
 	GetTemplate(path string) string
+	DeleteTemplate(path string) string
 }
 
 type ValuesStore interface {
 	PutValues(path string, value string) string
 	GetValues(path string) string
+	DeleteValues(path string) string
 }
 
 type ConfigRepo interface {

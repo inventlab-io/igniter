@@ -17,8 +17,10 @@ func initRoutes(r *gin.Engine, svr Server) {
 
 	r.PUT("/:datatype/k/*path", func(ctx *gin.Context) { putUserData(ctx, svr) })
 	r.GET("/:datatype/k/*path", func(ctx *gin.Context) { getUserData(ctx, svr) })
+	r.DELETE("/:datatype/k/*path", func(ctx *gin.Context) { deleteUserData(ctx, svr) })
 	r.PUT("/:datatype/:store/k/*path", func(ctx *gin.Context) { putUserData(ctx, svr) })
 	r.GET("/:datatype/:store/k/*path", func(ctx *gin.Context) { getUserData(ctx, svr) })
+	r.DELETE("/:datatype/:store/k/*path", func(ctx *gin.Context) { deleteUserData(ctx, svr) })
 }
 
 func getOptions(ctx *gin.Context, svr Server) {
@@ -85,6 +87,27 @@ func getUserData(ctx *gin.Context, svr Server) {
 		ctx.String(http.StatusOK, result)
 	} else {
 		result := svr.GetValues(store, path)
+		ctx.String(http.StatusOK, result)
+	}
+}
+
+func deleteUserData(ctx *gin.Context, svr Server) {
+
+	datatype := ctx.Param("datatype")
+
+	if datatype != "template" && datatype != "values" {
+		ctx.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
+	path := ctx.Param("path")
+	store := ctx.Param("store")
+
+	if datatype == "template" {
+		result := svr.DeleteTemplate(store, path)
+		ctx.String(http.StatusOK, result)
+	} else {
+		result := svr.DeleteValues(store, path)
 		ctx.String(http.StatusOK, result)
 	}
 }
