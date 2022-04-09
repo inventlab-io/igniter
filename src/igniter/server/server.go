@@ -54,6 +54,9 @@ func (svr Server) PutValues(store string, path string, values string) string {
 
 func (svr Server) PutStoreOptions(store string, optionsJson string) string {
 	configRepo := svr.configRepoFactory(svr.config)
+	if store == "" {
+		store = "default"
+	}
 	return configRepo.PutStoreOptions(store, optionsJson)
 }
 
@@ -63,7 +66,12 @@ func (svr Server) GetStoreOptions(store string) config.StoreOptions {
 	configRepo := svr.configRepoFactory(svr.config)
 
 	if store == "" {
-		return svr.config.Storage
+		optJson := configRepo.GetStoreOptions("default")
+		if optJson != nil {
+			json.Unmarshal(optJson, &opt)
+		} else {
+			return svr.config.Storage
+		}
 	} else {
 		optJson := configRepo.GetStoreOptions(store)
 		json.Unmarshal(optJson, &opt)

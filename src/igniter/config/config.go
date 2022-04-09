@@ -8,7 +8,7 @@ type EtcdOptions struct {
 
 type StoreOptions struct {
 	Type    string
-	Options any
+	Options map[string]interface{}
 }
 
 type ServerConfig struct {

@@ -77,7 +77,11 @@ func (e *EtcdStore) getData(key string) []byte {
 	r, _ := e.client.KV.Get(e.context, key)
 	defer e.client.Close()
 
-	return r.Kvs[0].Value
+	if r != nil && len(r.Kvs) > 0 && r.Kvs[0].Value != nil && len(r.Kvs[0].Value) > 0 {
+		return r.Kvs[0].Value
+	} else {
+		return nil
+	}
 }
 
 func (e *EtcdStore) putData(key string, data string) string {

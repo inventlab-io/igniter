@@ -9,6 +9,7 @@ import (
 func initRoutes(r *gin.Engine, svr Server) {
 
 	r.GET("/options/store", func(ctx *gin.Context) { getOptions(ctx, svr) })
+	r.PUT("/options/store", func(ctx *gin.Context) { putOptions(ctx, svr) })
 	r.GET("/options/store/k/:store", func(ctx *gin.Context) { getOptions(ctx, svr) })
 	r.PUT("/options/store/k/:store", func(ctx *gin.Context) { putOptions(ctx, svr) })
 
