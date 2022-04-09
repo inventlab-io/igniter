@@ -1,8 +1,8 @@
 package storage
 
 import (
-	"encoding/json"
 	"github.com/igniter/config"
+	"github.com/mitchellh/mapstructure"
 )
 
 type ConfigRepoFactory func(cfg config.ServerConfig) ConfigRepo
@@ -12,23 +12,41 @@ type TemplateStore interface {
 	GetTemplate(path string) string
 }
 
+type ValuesStore interface {
+	PutValues(path string, value string) string
+	GetValues(path string) string
+}
+
 type ConfigRepo interface {
 	GetStoreOptions(path string) []byte
 	PutStoreOptions(path string, optionsJson string) string
 }
 
-func GetTemplateStore(settingsJson []byte) TemplateStore {
+func GetTemplateStore(opt config.StoreOptions) TemplateStore {
 
-	var opt config.StoreOptions
-	json.Unmarshal(settingsJson, &opt)
 	var store TemplateStore
 
-	if opt.StorageType == "etcd" {
-		var etcdOpt config.EtcdOptions
-		json.Unmarshal(settingsJson, &etcdOpt)
-		json.Unmarshal(settingsJson, &etcdOpt)
-		store = etcdInitStore(etcdOpt)
+	if opt.Type == "etcd" {
+		store = createEtcdStore(opt)
 	}
 
+	return store
+}
+
+func GetValuesStore(opt config.StoreOptions) ValuesStore {
+
+	var store ValuesStore
+
+	if opt.Type == "etcd" {
+		store = createEtcdStore(opt)
+	}
+
+	return store
+}
+
+func createEtcdStore(opt config.StoreOptions) *EtcdStore {
+	var etcdOpt config.EtcdOptions
+	mapstructure.Decode(opt.Options, &etcdOpt)
+	store := etcdInitStore(etcdOpt)
 	return store
 }

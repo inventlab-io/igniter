@@ -10,10 +10,10 @@ import (
 func LoadServerConfig(path string) (cfg ServerConfig, err error) {
 	agentV := viper.New()
 
-	agentV.SetDefault("Storage", "etcd")
-	agentV.SetDefault("RequestTimeout", 2)
-	agentV.SetDefault("Etcd.Endpoints", []string{"127.0.0.1:2379"})
-	agentV.SetDefault("Etcd.ConnectionTimeout", 2)
+	agentV.SetDefault("Storage.Type", "etcd")
+	agentV.SetDefault("Storage.Options.RequestTimeout", 2)
+	agentV.SetDefault("Storage.Options.Endpoints", []string{"127.0.0.1:2379"})
+	agentV.SetDefault("Storage.Options.ConnectionTimeout", 2)
 
 	agentV.SetConfigType("yaml")
 

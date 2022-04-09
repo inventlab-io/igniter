@@ -2,7 +2,9 @@ package storage
 
 import (
 	"context"
+	"fmt"
 	"github.com/igniter/config"
+	"github.com/mitchellh/mapstructure"
 	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"log"
@@ -10,7 +12,9 @@ import (
 )
 
 func EtcdConfigRepoFactory(cfg config.ServerConfig) ConfigRepo {
-	store := etcdInitStore(cfg.Etcd)
+	var opt config.EtcdOptions
+	mapstructure.Decode(cfg.Storage.Options, &opt)
+	store := etcdInitStore(opt)
 	return store
 }
 
@@ -36,26 +40,49 @@ type EtcdStore struct {
 }
 
 func (e *EtcdStore) GetStoreOptions(key string) []byte {
-	result, err := e.client.Get(e.context, key)
-	defer e.client.Close()
-
-	if err != nil {
-	}
-	return result.Kvs[0].Value
+	optionsKey := parseOptionsKey(key)
+	return e.getData(optionsKey)
 }
 
 func (e *EtcdStore) PutStoreOptions(key string, optionsJson string) string {
-	_, err := e.client.Put(e.context, key, optionsJson)
-	defer e.client.Close()
-	
-	if err != nil {
-	}
-	return "Ok"
+	optionsKey := parseOptionsKey(key)
+	return e.putData(optionsKey, optionsJson)
+}
+
+// GetTemplate implements TemplateStore
+func (e EtcdStore) GetTemplate(key string) string {
+	templateKey := parseTemplateKey(key)
+	return string(e.getData(templateKey))
 }
 
 // PutTemplate implements TemplateStore
 func (e *EtcdStore) PutTemplate(key string, template string) string {
-	_, err := e.client.KV.Put(e.context, key, template)
+	templateKey := parseTemplateKey(key)
+	return e.putData(templateKey, template)
+}
+
+// GetValues implements ValuesStore
+func (e EtcdStore) GetValues(key string) string {
+	valuesKey := parseValuesKey(key)
+	return string(e.getData(valuesKey))
+}
+
+// PutValues implements ValuesStore
+func (e *EtcdStore) PutValues(key string, values string) string {
+	valuesKey := parseValuesKey(key)
+	return e.putData(valuesKey, valuesKey)
+}
+
+func (e *EtcdStore) getData(key string) []byte {
+	r, _ := e.client.KV.Get(e.context, key)
+	defer e.client.Close()
+
+	return r.Kvs[0].Value
+}
+
+func (e *EtcdStore) putData(key string, data string) string {
+
+	_, err := e.client.KV.Put(e.context, key, data)
 	defer e.client.Close()
 
 	if err != nil {
@@ -74,10 +101,14 @@ func (e *EtcdStore) PutTemplate(key string, template string) string {
 	return "Ok"
 }
 
-// GetTemplate implements TemplateStore
-func (e EtcdStore) GetTemplate(key string) string {
-	r, _ := e.client.KV.Get(e.context, key)
-	defer e.client.Close()
+func parseOptionsKey(key string) string {
+	return fmt.Sprintf(":opt:%s", key)
+}
 
-	return string(r.Kvs[0].Value)
+func parseTemplateKey(key string) string {
+	return fmt.Sprintf(":tpl:%s", key)
+}
+
+func parseValuesKey(key string) string {
+	return fmt.Sprintf(":val:%s", key)
 }

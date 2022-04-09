@@ -7,13 +7,12 @@ type EtcdOptions struct {
 }
 
 type StoreOptions struct {
-	StorageType string
+	Type    string
+	Options any
 }
 
 type ServerConfig struct {
-	RequestTimeout int
-	Storage        string
-	Etcd           EtcdOptions
+	Storage StoreOptions
 }
 
 type AgentConfig struct {
