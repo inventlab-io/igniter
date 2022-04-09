@@ -1,12 +1,9 @@
 package server
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"text/template"
 )
 
 func initRoutes(r *gin.Engine, svr Server) {
@@ -118,27 +115,15 @@ func deleteUserData(ctx *gin.Context, svr Server) {
 
 func render(ctx *gin.Context, svr Server) {
 
-	path := ctx.Param("path")
+	templatePath := ctx.Param("path")
 	store := ctx.Param("store")
 	var request RenderRequest
 	ctx.BindJSON(&request)
 
-	t := svr.GetTemplate(store, path)
-
-	valMap := make(map[string]interface{})
-
-	vals := svr.GetValuesInBatch(store, request.Paths)
-
-	for _, v := range vals {
-		var vm map[string]interface{}
-		json.Unmarshal([]byte(v), &vm)
-		for k, v2 := range vm {
-			valMap[k] = v2
-		}
+	result, ok := svr.Render(store, templatePath, request.Paths)
+	if ok {
+		ctx.String(http.StatusOK, result)
+	} else {
+		ctx.AbortWithStatus(http.StatusBadRequest)
 	}
-
-	tmpl, _ := template.New(path).Parse(t)
-	buf := new(bytes.Buffer)
-	tmpl.Execute(buf, valMap)
-	ctx.String(http.StatusOK, buf.String())
 }

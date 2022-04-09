@@ -1,11 +1,13 @@
 package server
 
 import (
+	"bytes"
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/igniter/config"
 	"github.com/igniter/http"
 	"github.com/igniter/storage"
+	"text/template"
 )
 
 type Server struct {
@@ -103,4 +105,31 @@ func (svr Server) DeleteStoreOptions(store string) string {
 		store = "default"
 	}
 	return configRepo.DeleteStoreOptions(store)
+}
+
+func (svr Server) Render(store string, templatePath string, valuePaths []string) (result string, ok bool) {
+
+	t := svr.GetTemplate(store, templatePath)
+	vals := svr.GetValuesInBatch(store, valuePaths)
+
+	valMap := make(map[string]interface{})
+
+	for _, v := range vals {
+		var vm map[string]interface{}
+		json.Unmarshal([]byte(v), &vm)
+		for k, v2 := range vm {
+			valMap[k] = v2
+		}
+	}
+
+	tmpl, err := template.New(templatePath).Parse(t)
+
+	if err != nil {
+		return "", false
+	} else {
+
+		buf := new(bytes.Buffer)
+		tmpl.Execute(buf, valMap)
+		return buf.String(), true
+	}
 }
