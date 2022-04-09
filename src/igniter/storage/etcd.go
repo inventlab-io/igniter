@@ -78,6 +78,24 @@ func (e EtcdStore) GetValues(key string) string {
 	return string(e.getData(valuesKey))
 }
 
+// GetValues implements ValuesStore
+func (e EtcdStore) GetValuesInBatch(keys []string) []string {
+
+	var valuesKeys []string
+
+	for _, k := range keys {
+		valuesKey := parseValuesKey(k)
+		valuesKeys = append(valuesKeys, valuesKey)
+	}
+	resultBytes := e.getDataInBatch(valuesKeys)
+
+	var values []string
+	for _, v := range resultBytes {
+		values = append(values, string(v))
+	}
+	return values
+}
+
 // PutValues implements ValuesStore
 func (e *EtcdStore) PutValues(key string, values string) string {
 	valuesKey := parseValuesKey(key)
@@ -91,14 +109,26 @@ func (e *EtcdStore) DeleteValues(key string) string {
 }
 
 func (e *EtcdStore) getData(key string) []byte {
-	r, _ := e.client.KV.Get(e.context, key)
-	defer e.client.Close()
-
-	if r != nil && len(r.Kvs) > 0 && r.Kvs[0].Value != nil && len(r.Kvs[0].Value) > 0 {
-		return r.Kvs[0].Value
+	values := e.getDataInBatch([]string{key})
+	if len(values) > 0 {
+		return values[0]
 	} else {
 		return nil
 	}
+}
+
+func (e *EtcdStore) getDataInBatch(keys []string) [][]byte {
+
+	var values [][]byte
+	defer e.client.Close()
+	for _, k := range keys {
+		r, _ := e.client.KV.Get(e.context, k)
+		if r != nil && len(r.Kvs) > 0 && r.Kvs[0].Value != nil && len(r.Kvs[0].Value) > 0 {
+			values = append(values, r.Kvs[0].Value)
+		}
+	}
+
+	return values
 }
 
 func (e *EtcdStore) putData(key string, data string) string {

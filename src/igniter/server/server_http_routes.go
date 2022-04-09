@@ -1,9 +1,12 @@
 package server
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"text/template"
 )
 
 func initRoutes(r *gin.Engine, svr Server) {
@@ -21,6 +24,7 @@ func initRoutes(r *gin.Engine, svr Server) {
 	r.PUT("/:datatype/:store/k/*path", func(ctx *gin.Context) { putUserData(ctx, svr) })
 	r.GET("/:datatype/:store/k/*path", func(ctx *gin.Context) { getUserData(ctx, svr) })
 	r.DELETE("/:datatype/:store/k/*path", func(ctx *gin.Context) { deleteUserData(ctx, svr) })
+	r.POST("/render/k/*path", func(ctx *gin.Context) { render(ctx, svr) })
 }
 
 func getOptions(ctx *gin.Context, svr Server) {
@@ -110,4 +114,31 @@ func deleteUserData(ctx *gin.Context, svr Server) {
 		result := svr.DeleteValues(store, path)
 		ctx.String(http.StatusOK, result)
 	}
+}
+
+func render(ctx *gin.Context, svr Server) {
+
+	path := ctx.Param("path")
+	store := ctx.Param("store")
+	var request RenderRequest
+	ctx.BindJSON(&request)
+
+	t := svr.GetTemplate(store, path)
+
+	valMap := make(map[string]interface{})
+
+	vals := svr.GetValuesInBatch(store, request.Paths)
+
+	for _, v := range vals {
+		var vm map[string]interface{}
+		json.Unmarshal([]byte(v), &vm)
+		for k, v2 := range vm {
+			valMap[k] = v2
+		}
+	}
+
+	tmpl, _ := template.New(path).Parse(t)
+	buf := new(bytes.Buffer)
+	tmpl.Execute(buf, valMap)
+	ctx.String(http.StatusOK, buf.String())
 }

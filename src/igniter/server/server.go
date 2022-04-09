@@ -52,6 +52,12 @@ func (svr Server) GetValues(store string, path string) string {
 	return valuesStore.GetValues(path)
 }
 
+func (svr Server) GetValuesInBatch(store string, paths []string) []string {
+	storeOpt := svr.GetStoreOptions(store)
+	valuesStore := storage.GetValuesStore(storeOpt)
+	return valuesStore.GetValuesInBatch(paths)
+}
+
 func (svr Server) PutValues(store string, path string, values string) string {
 	storeOpt := svr.GetStoreOptions(store)
 	valuesStore := storage.GetValuesStore(storeOpt)
