@@ -49,6 +49,11 @@ func (e *EtcdStore) PutStoreOptions(key string, optionsJson string) string {
 	return e.putData(optionsKey, optionsJson)
 }
 
+func (e *EtcdStore) DeleteStoreOptions(key string) string {
+	optionsKey := parseOptionsKey(key)
+	return e.deleteData(optionsKey)
+}
+
 // GetTemplate implements TemplateStore
 func (e EtcdStore) GetTemplate(key string) string {
 	templateKey := parseTemplateKey(key)
@@ -70,7 +75,7 @@ func (e EtcdStore) GetValues(key string) string {
 // PutValues implements ValuesStore
 func (e *EtcdStore) PutValues(key string, values string) string {
 	valuesKey := parseValuesKey(key)
-	return e.putData(valuesKey, valuesKey)
+	return e.putData(valuesKey, values)
 }
 
 func (e *EtcdStore) getData(key string) []byte {
@@ -87,6 +92,25 @@ func (e *EtcdStore) getData(key string) []byte {
 func (e *EtcdStore) putData(key string, data string) string {
 
 	_, err := e.client.KV.Put(e.context, key, data)
+	defer e.client.Close()
+
+	if err != nil {
+		switch err {
+		case context.Canceled:
+			log.Fatalf("ctx is canceled by another routine: %v", err)
+		case context.DeadlineExceeded:
+			log.Fatalf("ctx is attached with a deadline is exceeded: %v", err)
+		case rpctypes.ErrEmptyKey:
+			log.Fatalf("client-side error: %v", err)
+		default:
+			log.Fatalf("bad cluster endpoints, which are not etcd servers: %v", err)
+		}
+	}
+
+	return "Ok"
+}
+func (e *EtcdStore) deleteData(key string) string {
+	_, err := e.client.KV.Delete(e.context, key)
 	defer e.client.Close()
 
 	if err != nil {

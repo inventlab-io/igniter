@@ -20,6 +20,7 @@ type ValuesStore interface {
 type ConfigRepo interface {
 	GetStoreOptions(path string) []byte
 	PutStoreOptions(path string, optionsJson string) string
+	DeleteStoreOptions(path string) string
 }
 
 func GetTemplateStore(opt config.StoreOptions) TemplateStore {

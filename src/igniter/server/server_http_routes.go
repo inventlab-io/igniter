@@ -10,8 +10,10 @@ func initRoutes(r *gin.Engine, svr Server) {
 
 	r.GET("/options/store", func(ctx *gin.Context) { getOptions(ctx, svr) })
 	r.PUT("/options/store", func(ctx *gin.Context) { putOptions(ctx, svr) })
+	r.DELETE("/options/store", func(ctx *gin.Context) { deleteOptions(ctx, svr) })
 	r.GET("/options/store/k/:store", func(ctx *gin.Context) { getOptions(ctx, svr) })
 	r.PUT("/options/store/k/:store", func(ctx *gin.Context) { putOptions(ctx, svr) })
+	r.DELETE("/options/store/k/:store", func(ctx *gin.Context) { deleteOptions(ctx, svr) })
 
 	r.PUT("/:datatype/k/*path", func(ctx *gin.Context) { putUserData(ctx, svr) })
 	r.GET("/:datatype/k/*path", func(ctx *gin.Context) { getUserData(ctx, svr) })
@@ -26,13 +28,18 @@ func getOptions(ctx *gin.Context, svr Server) {
 }
 
 func putOptions(ctx *gin.Context, svr Server) {
-
 	store := ctx.Param("store")
 	options, err := ctx.GetRawData()
 	if err != nil {
 		fmt.Errorf("Malformed template option request")
 	}
 	result := svr.PutStoreOptions(store, string(options))
+	ctx.String(http.StatusOK, result)
+}
+
+func deleteOptions(ctx *gin.Context, svr Server) {
+	store := ctx.Param("store")
+	result := svr.DeleteStoreOptions(store)
 	ctx.String(http.StatusOK, result)
 }
 
