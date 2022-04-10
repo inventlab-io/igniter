@@ -117,10 +117,10 @@ func render(ctx *gin.Context, svr Server) {
 
 	templatePath := ctx.Param("path")
 	store := ctx.Param("store")
-	var request RenderRequest
-	ctx.BindJSON(&request)
+	var render RenderDto
+	ctx.BindJSON(&render)
 
-	result, ok := svr.Render(store, templatePath, request.Paths)
+	result, ok := svr.Render(store, templatePath, render)
 	if ok {
 		ctx.String(http.StatusOK, result)
 	} else {

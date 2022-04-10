@@ -54,7 +54,7 @@ func (svr Server) GetValues(store string, path string) string {
 	return valuesStore.GetValues(path)
 }
 
-func (svr Server) GetValuesInBatch(store string, paths []string) []string {
+func (svr Server) GetValuesInBatch(store string, paths []string) map[string]string {
 	storeOpt := svr.GetStoreOptions(store)
 	valuesStore := storage.GetValuesStore(storeOpt)
 	return valuesStore.GetValuesInBatch(paths)
@@ -107,19 +107,25 @@ func (svr Server) DeleteStoreOptions(store string) string {
 	return configRepo.DeleteStoreOptions(store)
 }
 
-func (svr Server) Render(store string, templatePath string, valuePaths []string) (result string, ok bool) {
+func (svr Server) Render(store string, templatePath string, render RenderDto) (result string, ok bool) {
+
+	templateValueMap := make(map[string]interface{})
+	storeValueMap := prefetchValuesByBatch(render, svr)
 
 	t := svr.GetTemplate(store, templatePath)
-	vals := svr.GetValuesInBatch(store, valuePaths)
 
-	valMap := make(map[string]interface{})
-	for i := len(vals) - 1; i >= 0; i-- {
-		v := vals[i]
-		var vm map[string]interface{}
-		json.Unmarshal([]byte(v), &vm)
+	values := render.Values
+	for valueIndex := len(values) - 1; valueIndex >= 0; valueIndex-- {
+		val := values[valueIndex]
+		for storeIndex := len(val.StoreKeys) - 1; storeIndex >= 0; storeIndex-- {
+			store := val.StoreKeys[storeIndex]
 
-		for k, v2 := range vm {
-			valMap[k] = v2
+			rawValue := storeValueMap[store][val.Path]
+			var vm map[string]interface{}
+			json.Unmarshal([]byte(rawValue), &vm)
+			for k, v := range vm {
+				templateValueMap[k] = v
+			}
 		}
 	}
 
@@ -130,7 +136,33 @@ func (svr Server) Render(store string, templatePath string, valuePaths []string)
 	} else {
 
 		buf := new(bytes.Buffer)
-		tmpl.Execute(buf, valMap)
+		tmpl.Execute(buf, templateValueMap)
 		return buf.String(), true
 	}
+}
+
+func prefetchValuesByBatch(render RenderDto, svr Server) map[string]map[string]string {
+
+	//storeMap[store] = valuePath
+	storeMap := make(map[string][]string)
+	for _, v := range render.Values {
+		for _, s := range v.StoreKeys {
+			storeMap[s] = append(storeMap[s], v.Path)
+		}
+	}
+
+	//storeValueMap[store][valuePath] = Value
+	storeValueMap := make(map[string]map[string]string)
+	for store, valuePaths := range storeMap {
+		valMap := svr.GetValuesInBatch(store, valuePaths)
+
+		for valuePath, val := range valMap {
+			if storeValueMap[store] == nil {
+				storeValueMap[store] = make(map[string]string)
+			}
+			storeValueMap[store][valuePath] = val
+		}
+	}
+
+	return storeValueMap
 }

@@ -16,7 +16,7 @@ type TemplateStore interface {
 type ValuesStore interface {
 	PutValues(path string, value string) string
 	GetValues(path string) string
-	GetValuesInBatch(paths []string) []string
+	GetValuesInBatch(paths []string) map[string]string
 	DeleteValues(path string) string
 }
 

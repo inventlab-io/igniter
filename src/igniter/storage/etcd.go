@@ -8,6 +8,7 @@ import (
 	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"log"
+	"strings"
 	"time"
 )
 
@@ -79,7 +80,7 @@ func (e EtcdStore) GetValues(key string) string {
 }
 
 // GetValues implements ValuesStore
-func (e EtcdStore) GetValuesInBatch(keys []string) []string {
+func (e EtcdStore) GetValuesInBatch(keys []string) map[string]string {
 
 	var valuesKeys []string
 
@@ -89,9 +90,10 @@ func (e EtcdStore) GetValuesInBatch(keys []string) []string {
 	}
 	resultBytes := e.getDataInBatch(valuesKeys)
 
-	var values []string
-	for _, v := range resultBytes {
-		values = append(values, string(v))
+	values := make(map[string]string)
+	for k, v := range resultBytes {
+		userKey := stripInternalPrefix(k)
+		values[userKey] = string(v)
 	}
 	return values
 }
@@ -109,26 +111,27 @@ func (e *EtcdStore) DeleteValues(key string) string {
 }
 
 func (e *EtcdStore) getData(key string) []byte {
-	values := e.getDataInBatch([]string{key})
-	if len(values) > 0 {
-		return values[0]
+	valuesMap := e.getDataInBatch([]string{key})
+	if len(valuesMap) > 0 {
+		return valuesMap[key]
 	} else {
 		return nil
 	}
 }
 
-func (e *EtcdStore) getDataInBatch(keys []string) [][]byte {
+func (e *EtcdStore) getDataInBatch(keys []string) map[string][]byte {
 
-	var values [][]byte
+	valueMap := make(map[string][]byte)
+
 	defer e.client.Close()
 	for _, k := range keys {
 		r, _ := e.client.KV.Get(e.context, k)
 		if r != nil && len(r.Kvs) > 0 && r.Kvs[0].Value != nil && len(r.Kvs[0].Value) > 0 {
-			values = append(values, r.Kvs[0].Value)
+			valueMap[k] = r.Kvs[0].Value
 		}
 	}
 
-	return values
+	return valueMap
 }
 
 func (e *EtcdStore) putData(key string, data string) string {
@@ -181,4 +184,13 @@ func parseTemplateKey(key string) string {
 
 func parseValuesKey(key string) string {
 	return fmt.Sprintf(":val:%s", key)
+}
+
+func stripInternalPrefix(key string) string {
+	if strings.HasPrefix(key, ":opt:") || strings.HasPrefix(key, ":tpl:") || strings.HasPrefix(key, ":val:") {
+		return key[5:]
+	} else {
+		return key
+	}
+
 }
