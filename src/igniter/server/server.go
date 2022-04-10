@@ -117,8 +117,14 @@ func (svr Server) Render(store string, templatePath string, render RenderDto) (r
 	values := render.Values
 	for valueIndex := len(values) - 1; valueIndex >= 0; valueIndex-- {
 		val := values[valueIndex]
-		for storeIndex := len(val.StoreKeys) - 1; storeIndex >= 0; storeIndex-- {
-			store := val.StoreKeys[storeIndex]
+		storeKeys := val.StoreKeys
+
+		if len(storeKeys) == 0 {
+			storeKeys = append(storeKeys, "")
+		}
+
+		for storeIndex := len(storeKeys) - 1; storeIndex >= 0; storeIndex-- {
+			store := storeKeys[storeIndex]
 
 			rawValue := storeValueMap[store][val.Path]
 			var vm map[string]interface{}
@@ -145,9 +151,13 @@ func prefetchValuesByBatch(render RenderDto, svr Server) map[string]map[string]s
 
 	//storeMap[store] = valuePath
 	storeMap := make(map[string][]string)
-	for _, v := range render.Values {
-		for _, s := range v.StoreKeys {
-			storeMap[s] = append(storeMap[s], v.Path)
+	for _, val := range render.Values {
+		storeKeys := val.StoreKeys
+		if len(storeKeys) == 0 {
+			storeKeys = append(storeKeys, "")
+		}
+		for _, s := range storeKeys {
+			storeMap[s] = append(storeMap[s], val.Path)
 		}
 	}
 
