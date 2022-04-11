@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -117,13 +118,61 @@ func render(ctx *gin.Context, svr Server) {
 
 	templatePath := ctx.Param("path")
 	store := ctx.Param("store")
-	var render RenderDto
-	ctx.BindJSON(&render)
-
+	rawBody, _ := ctx.GetRawData()
+	render := parseRenderRequest(store, rawBody)
 	result, ok := svr.Render(store, templatePath, render)
 	if ok {
 		ctx.String(http.StatusOK, result)
 	} else {
 		ctx.AbortWithStatus(http.StatusBadRequest)
 	}
+}
+
+func parseRenderRequest(defaultStore string, rawBody []byte) RenderDto {
+	var render RenderDto
+
+	var renderRequest map[string]interface{}
+	json.Unmarshal(rawBody, &renderRequest)
+
+	renderRequestValues := renderRequest["values"]
+	switch t := renderRequestValues.(type) {
+	case string:
+		render.Values = append(render.Values, makeNewRenderValue(defaultStore, t))
+	case []interface{}:
+		renderRequestValues := renderRequestValues.([]interface{})
+		for _, rrv := range renderRequestValues {
+			if strVal, isString := rrv.(string); isString {
+				render.Values = append(render.Values, makeNewRenderValue(defaultStore, strVal))
+			} else if mapVal, isMap := rrv.(map[string]interface{}); isMap {
+				newRenderVal := convertMapToRenderValue(mapVal)
+				render.Values = append(render.Values, newRenderVal)
+			}
+
+		}
+	}
+	return render
+}
+
+func convertMapToRenderValue(r map[string]interface{}) RenderValue {
+	path := r["path"].(string)
+	newRv := RenderValue{Path: path}
+	storeKeys := r["storeKeys"]
+
+	if strKeys, isString := storeKeys.(string); isString {
+		newRv.StoreKeys = append(newRv.StoreKeys, strKeys)
+	} else if array, isArray := storeKeys.([]interface{}); isArray {
+		newRv = RenderValue{Path: path}
+		for _, item := range array {
+			newRv.StoreKeys = append(newRv.StoreKeys, item.(string))
+		}
+	}
+
+	return newRv
+}
+
+func makeNewRenderValue(store string, path string) RenderValue {
+	rv := RenderValue{}
+	rv.Path = path
+	rv.StoreKeys = append(rv.StoreKeys, store)
+	return rv
 }

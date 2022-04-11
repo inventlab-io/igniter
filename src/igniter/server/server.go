@@ -120,7 +120,7 @@ func (svr Server) Render(store string, templatePath string, render RenderDto) (r
 		storeKeys := val.StoreKeys
 
 		if len(storeKeys) == 0 {
-			storeKeys = append(storeKeys, "")
+			storeKeys = append(storeKeys, store)
 		}
 
 		for storeIndex := len(storeKeys) - 1; storeIndex >= 0; storeIndex-- {
