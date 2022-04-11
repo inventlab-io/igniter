@@ -1,0 +1,11 @@
+name: test
+server:
+  address: http://test.com
+
+storage:
+  type: etcd
+  options:
+    endpoints:
+      - 127.0.0.1:2379
+    connectionTimeout: 3
+    requestTimeout: 3
