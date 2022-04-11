@@ -22,7 +22,9 @@ func initRoutes(r *gin.Engine, svr Server) {
 	r.PUT("/:datatype/:store/k/*path", func(ctx *gin.Context) { putUserData(ctx, svr) })
 	r.GET("/:datatype/:store/k/*path", func(ctx *gin.Context) { getUserData(ctx, svr) })
 	r.DELETE("/:datatype/:store/k/*path", func(ctx *gin.Context) { deleteUserData(ctx, svr) })
+
 	r.POST("/render/k/*path", func(ctx *gin.Context) { render(ctx, svr) })
+	r.POST("/render/:store/k/*path", func(ctx *gin.Context) { render(ctx, svr) })
 }
 
 func getOptions(ctx *gin.Context, svr Server) {
