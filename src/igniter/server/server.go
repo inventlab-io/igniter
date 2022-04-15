@@ -7,7 +7,7 @@ import (
 	"github.com/igniter/config"
 	"github.com/igniter/http"
 	"github.com/igniter/storage"
-	"text/template"
+	"github.com/valyala/fasttemplate"
 )
 
 type Server struct {
@@ -134,17 +134,11 @@ func (svr Server) Render(store string, templatePath string, render RenderDto) (r
 			}
 		}
 	}
+	tmpl := fasttemplate.New(t, "{{", "}}")
 
-	tmpl, err := template.New(templatePath).Parse(t)
-
-	if err != nil {
-		return "", false
-	} else {
-
-		buf := new(bytes.Buffer)
-		tmpl.Execute(buf, templateValueMap)
-		return buf.String(), true
-	}
+	buf := new(bytes.Buffer)
+	tmpl.Execute(buf, templateValueMap)
+	return buf.String(), true
 }
 
 func prefetchValuesByBatch(render RenderDto, svr Server) map[string]map[string]string {

@@ -41,16 +41,16 @@ This form allows fine grain control on which values is retrieved.
     "values": [{
             //optional, overload (string or string array)
             "storeKeys": ["etcd","boltdb"],
-            "path": "/abc"
+            "path": "/myvalue1"
         },
         {
             //define a single key
             "storeKeys": "etcd",
-            "path": "/def"
+            "path": "/myvalue2"
         },
         {
             //no storeKey set, will fetch from the same store location as template
-            "path": "/ghi"
+            "path": "/myvalue3"
         }]
 }
 ```
@@ -63,14 +63,14 @@ curl --location --request POST 'localhost:8080/render/k/mytemplate' \
 {
     "values": [{
             "storeKeys":["etcd","boltdb"],
-            "path": "/value1"
+            "path": "/myvalue1"
         },
         {
             "storeKeys":"etcd",
-            "path": "/value2"
+            "path": "/myvalue2"
         },
         {
-            "path": "/value3"
+            "path": "/myvalue3"
         }]'
 ```
 
@@ -81,7 +81,7 @@ curl --location --request POST 'localhost:8080/render/k/mytemplate' \
 A convinience form for multiple values from the same storage location as the template. Values will be fetched from the same store location as template.
 ```jsonc
 {
-    "values": [ "/value1", "/value2", "/value3" ]
+    "values": [ "/myvalue1", "/myvalue2", "/myvalue3" ]
 }
 ```
 
@@ -90,7 +90,7 @@ A convinience form for multiple values from the same storage location as the tem
 curl --location --request POST 'localhost:8080/render/k/mytemplate' \
 --header 'Content-Type: application/json' \
 --data-raw '{
-    "values": [ "/abc",  "/def", "/ghi" ]
+    "values": [ "/myvalue1",  "/myvalue2", "/myvalue3" ]
 }'
 ```
 ---
@@ -105,7 +105,7 @@ A convinience form for single value from the same storage location as the templa
 
 **example**
 ```bash
-curl --location --request POST 'localhost:8080/render/k/abc/def' \
+curl --location --request POST 'localhost:8080/render/k/mytemplate' \
 --header 'Content-Type: application/json' \
 --data-raw '{
     "values": "/myvalue"
