@@ -72,6 +72,13 @@ func (svr Server) DeleteValues(store string, path string) string {
 	return valuesStore.DeleteValues(path)
 }
 
+func (svr Server) GetSecrets(store string, path string) string {
+	//secretsOpt := svr.GetSecretsOptions(store)
+	//secretsStore := storage.GetSecretsStore(secretsOpt)
+	//return secretsStore.GetSecrets(path)
+	return ""
+}
+
 func (svr Server) GetStoreOptions(store string) config.StoreOptions {
 
 	var opt config.StoreOptions
@@ -107,12 +114,47 @@ func (svr Server) DeleteStoreOptions(store string) string {
 	return configRepo.DeleteStoreOptions(store)
 }
 
+func (svr Server) GetSecretsOptions(engine string) config.SecretsOptions {
+
+	var opt config.SecretsOptions
+	configRepo := svr.configRepoFactory(svr.config)
+
+	if engine == "" {
+		optJson := configRepo.GetSecretsOptions("default")
+		if optJson != nil {
+			json.Unmarshal(optJson, &opt)
+		}
+
+	} else {
+		optJson := configRepo.GetSecretsOptions(engine)
+		json.Unmarshal(optJson, &opt)
+	}
+
+	return opt
+}
+
+func (svr Server) PutSecretsOptions(engine string, optionsJson string) string {
+	configRepo := svr.configRepoFactory(svr.config)
+	if engine == "" {
+		engine = "default"
+	}
+	return configRepo.PutSecretsOptions(engine, optionsJson)
+}
+
+func (svr Server) DeleteSecretsOptions(engine string) string {
+	configRepo := svr.configRepoFactory(svr.config)
+	if engine == "" {
+		engine = "default"
+	}
+	return configRepo.DeleteSecretsOptions(engine)
+}
+
 func (svr Server) Render(store string, templatePath string, render RenderDto) (result string, ok bool) {
 
 	templateValueMap := make(map[string]interface{})
 	storeValueMap := prefetchValuesByBatch(render, svr)
 
-	t := svr.GetTemplate(store, templatePath)
+	rawTmpl := svr.GetTemplate(store, templatePath)
 
 	values := render.Values
 	for valueIndex := len(values) - 1; valueIndex >= 0; valueIndex-- {
@@ -133,8 +175,12 @@ func (svr Server) Render(store string, templatePath string, render RenderDto) (r
 				templateValueMap[k] = v
 			}
 		}
+
+		// parse and get values and secrets
+		// need to build a tree and prevent recursions
 	}
-	tmpl := fasttemplate.New(t, "{{", "}}")
+
+	tmpl := fasttemplate.New(rawTmpl, "{{", "}}")
 
 	buf := new(bytes.Buffer)
 	tmpl.Execute(buf, templateValueMap)

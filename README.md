@@ -113,12 +113,13 @@ curl --location --request POST 'localhost:8080/render/k/mytemplate' \
 ```
 
 ## API
-- `/options/store/k/:store`
+- `/options/store/:store`
+- `/options/secrets/:engine`
 - `/template/k/:path`
 - `/template/:store/k/:path`
 - `/values/k/:path`
 - `/values/:store/k/:path`
+- `/secrets/k/:path` (TODO)
+- `/secrets/:engine/k/:path` (TODO)
 - `/render/k/:path`
 - `/policy/k/:path` (TODO)
-- `/secret/engine/k/:engine` (TODO)
-- `/secret/:engine/k/:path` (TODO)
