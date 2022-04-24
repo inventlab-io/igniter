@@ -20,8 +20,10 @@ type ValuesStore interface {
 	DeleteValues(path string) string
 }
 
-type SecretStore interface {
-	GetSecrets(path string) string
+type SecretsMapStore interface {
+	PutSecretsMap(engine string, path string, value string) string
+	GetSecretsMap(engine string, path string) string
+	DeleteSecretsMap(engine string, path string) string
 }
 
 type ConfigRepo interface {
@@ -47,6 +49,17 @@ func GetTemplateStore(opt config.StoreOptions) TemplateStore {
 func GetValuesStore(opt config.StoreOptions) ValuesStore {
 
 	var store ValuesStore
+
+	if opt.Type == "etcd" {
+		store = createEtcdStore(opt)
+	}
+
+	return store
+}
+
+func GetSecretsMapStore(opt config.StoreOptions) SecretsMapStore {
+
+	var store SecretsMapStore
 
 	if opt.Type == "etcd" {
 		store = createEtcdStore(opt)

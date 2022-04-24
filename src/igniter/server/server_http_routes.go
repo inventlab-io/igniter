@@ -16,6 +16,19 @@ func initRoutes(r *gin.Engine, svr Server) {
 	r.PUT("/options/secrets/k/:engine", func(ctx *gin.Context) { putSecretsOptions(ctx, svr) })
 	r.DELETE("/options/secrets/k/:engine", func(ctx *gin.Context) { deleteSecretsOptions(ctx, svr) })
 
+	r.PUT("/secrets/k/*path", func(ctx *gin.Context) { putSecretsMapData(ctx, svr) })
+	r.GET("/secrets/k/*path", func(ctx *gin.Context) { getSecretsMapData(ctx, svr) })
+	r.DELETE("/secrets/k/*path", func(ctx *gin.Context) { deleteSecretsMapData(ctx, svr) })
+	r.PUT("/secrets/s/:store/k/*path", func(ctx *gin.Context) { putSecretsMapData(ctx, svr) })
+	r.GET("/secrets/s/:store/k/*path", func(ctx *gin.Context) { getSecretsMapData(ctx, svr) })
+	r.DELETE("/secrets/s/:store/k/*path", func(ctx *gin.Context) { deleteSecretsMapData(ctx, svr) })
+	r.PUT("/secrets/:engine/k/*path", func(ctx *gin.Context) { putSecretsMapData(ctx, svr) })
+	r.GET("/secrets/:engine/k/*path", func(ctx *gin.Context) { getSecretsMapData(ctx, svr) })
+	r.DELETE("/secrets/:engine/k/*path", func(ctx *gin.Context) { deleteSecretsMapData(ctx, svr) })
+	r.PUT("/secrets/:engine/s/:store/k/*path", func(ctx *gin.Context) { putSecretsMapData(ctx, svr) })
+	r.GET("/secrets/:engine/s/:store/k/*path", func(ctx *gin.Context) { getSecretsMapData(ctx, svr) })
+	r.DELETE("/secrets/:engine/s/:store/k/*path", func(ctx *gin.Context) { deleteSecretsMapData(ctx, svr) })
+
 	r.PUT("/:datatype/k/*path", func(ctx *gin.Context) { putUserData(ctx, svr) })
 	r.GET("/:datatype/k/*path", func(ctx *gin.Context) { getUserData(ctx, svr) })
 	r.DELETE("/:datatype/k/*path", func(ctx *gin.Context) { deleteUserData(ctx, svr) })
@@ -90,7 +103,7 @@ func putUserData(ctx *gin.Context, svr Server) {
 	if datatype == "template" {
 		result := svr.PutTemplate(store, path, string(rawData))
 		ctx.String(http.StatusOK, result)
-	} else {
+	} else if datatype == "values" {
 		result := svr.PutValues(store, path, string(rawData))
 		ctx.String(http.StatusOK, result)
 	}
@@ -111,7 +124,7 @@ func getUserData(ctx *gin.Context, svr Server) {
 	if datatype == "template" {
 		result := svr.GetTemplate(store, path)
 		ctx.String(http.StatusOK, result)
-	} else {
+	} else if datatype == "values" {
 		result := svr.GetValues(store, path)
 		ctx.String(http.StatusOK, result)
 	}
@@ -132,10 +145,43 @@ func deleteUserData(ctx *gin.Context, svr Server) {
 	if datatype == "template" {
 		result := svr.DeleteTemplate(store, path)
 		ctx.String(http.StatusOK, result)
-	} else {
+	} else if datatype == "values" {
 		result := svr.DeleteValues(store, path)
 		ctx.String(http.StatusOK, result)
 	}
+}
+
+func putSecretsMapData(ctx *gin.Context, svr Server) {
+
+	path := ctx.Param("path")
+	engine := ctx.Param("engine")
+	store := ctx.Param("store")
+	rawData, err := ctx.GetRawData()
+	if err != nil {
+		fmt.Errorf("Error putting rawData %s", path)
+	}
+
+	result := svr.PutSecretsMap(engine, store, path, string(rawData))
+	ctx.String(http.StatusOK, result)
+}
+
+func getSecretsMapData(ctx *gin.Context, svr Server) {
+
+	path := ctx.Param("path")
+	engine := ctx.Param("engine")
+	store := ctx.Param("store")
+
+	result := svr.GetSecretsMap(engine, store, path)
+	ctx.String(http.StatusOK, result)
+}
+
+func deleteSecretsMapData(ctx *gin.Context, svr Server) {
+
+	path := ctx.Param("path")
+	engine := ctx.Param("engine")
+	store := ctx.Param("store")
+	result := svr.DeleteSecretsMap(engine, store, path)
+	ctx.String(http.StatusOK, result)
 }
 
 func render(ctx *gin.Context, svr Server) {

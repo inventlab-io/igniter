@@ -112,6 +112,16 @@ curl --location --request POST 'localhost:8080/render/k/mytemplate' \
 }'
 ```
 
+**Secrets Value**
+```jsonc
+{
+  "path": "/v1/secret/data/foo",
+  "map":{
+    "mysecret": "data.data.mysecret"
+  }
+}
+```
+
 ## API
 - `/options/store/:store`
 - `/options/secrets/:engine`
@@ -120,6 +130,6 @@ curl --location --request POST 'localhost:8080/render/k/mytemplate' \
 - `/values/k/:path`
 - `/values/:store/k/:path`
 - `/secrets/k/:path` (TODO)
-- `/secrets/:engine/k/:path` (TODO)
+- `/secrets/:engine/:store/k/:path`
 - `/render/k/:path`
 - `/policy/k/:path` (TODO)

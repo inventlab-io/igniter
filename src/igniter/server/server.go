@@ -72,11 +72,34 @@ func (svr Server) DeleteValues(store string, path string) string {
 	return valuesStore.DeleteValues(path)
 }
 
-func (svr Server) GetSecrets(store string, path string) string {
-	//secretsOpt := svr.GetSecretsOptions(store)
-	//secretsStore := storage.GetSecretsStore(secretsOpt)
-	//return secretsStore.GetSecrets(path)
-	return ""
+func (svr Server) GetSecretsMap(engine string, store string, path string) string {
+	if engine == "" {
+		engine = "vault"
+	}
+
+	storeOpt := svr.GetStoreOptions(store)
+	secretsMapStore := storage.GetSecretsMapStore(storeOpt)
+	return secretsMapStore.GetSecretsMap(engine, path)
+}
+
+func (svr Server) PutSecretsMap(engine string, store string, path string, values string) string {
+	if engine == "" {
+		engine = "vault"
+	}
+
+	storeOpt := svr.GetStoreOptions(store)
+	secretsMapStore := storage.GetSecretsMapStore(storeOpt)
+	return secretsMapStore.PutSecretsMap(engine, path, values)
+}
+
+func (svr Server) DeleteSecretsMap(engine string, store string, path string) string {
+	if engine == "" {
+		engine = "vault"
+	}
+
+	storeOpt := svr.GetStoreOptions(store)
+	secretsMapStore := storage.GetSecretsMapStore(storeOpt)
+	return secretsMapStore.DeleteSecretsMap(engine, path)
 }
 
 func (svr Server) GetStoreOptions(store string) config.StoreOptions {

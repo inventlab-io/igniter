@@ -6,12 +6,14 @@ type EtcdOptions struct {
 	ConnectionTimeout int
 }
 
-type VaultOptions struct {
-}
-
 type StoreOptions struct {
 	Type    string
 	Options map[string]interface{}
+}
+
+type VaultOptions struct {
+	Address string
+	Token   string
 }
 
 type SecretsOptions struct {

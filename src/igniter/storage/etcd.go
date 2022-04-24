@@ -125,6 +125,24 @@ func (e *EtcdStore) DeleteValues(key string) string {
 	return e.deleteData(valuesKey)
 }
 
+// GetSecretsMap implements SecretsMapStore
+func (e EtcdStore) GetSecretsMap(engine string, key string) string {
+	secretsMapKey := parseSecretsMapKey(engine, key)
+	return string(e.getData(secretsMapKey))
+}
+
+// PutSecretsMap implements SecretsMapStore
+func (e *EtcdStore) PutSecretsMap(engine string, key string, values string) string {
+	secretsMapKey := parseSecretsMapKey(engine, key)
+	return e.putData(secretsMapKey, values)
+}
+
+// DeleteSecretsMap implements SecretsMapStore
+func (e *EtcdStore) DeleteSecretsMap(engine string, key string) string {
+	secretsMapKey := parseSecretsMapKey(engine, key)
+	return e.deleteData(secretsMapKey)
+}
+
 func (e *EtcdStore) getData(key string) []byte {
 	valuesMap := e.getDataInBatch([]string{key})
 	if len(valuesMap) > 0 {
@@ -169,6 +187,7 @@ func (e *EtcdStore) putData(key string, data string) string {
 
 	return "Ok"
 }
+
 func (e *EtcdStore) deleteData(key string) string {
 	_, err := e.client.KV.Delete(e.context, key)
 	defer e.client.Close()
@@ -205,6 +224,10 @@ func parseValuesKey(key string) string {
 	return fmt.Sprintf(":val:%s", key)
 }
 
+func parseSecretsMapKey(engine string, key string) string {
+	return fmt.Sprintf(":sec:%s:%s", engine, key)
+}
+
 func stripInternalPrefix(key string) string {
 	if strings.HasPrefix(key, ":opt_store:") {
 		return key[11:]
@@ -213,7 +236,13 @@ func stripInternalPrefix(key string) string {
 	} else if strings.HasPrefix(key, ":tpl:") ||
 		strings.HasPrefix(key, ":val:") {
 		return key[5:]
-	} else {
-		return key
+	} else if strings.HasPrefix(key, ":sec:") {
+		for i := 6; i < len(key); i++ {
+			if key[i] == ':' {
+				return key[i:]
+			}
+		}
 	}
+
+	return key
 }
