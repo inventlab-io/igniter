@@ -130,6 +130,6 @@ curl --location --request POST 'localhost:8080/render/k/mytemplate' \
 - `/values/k/:path`
 - `/values/:store/k/:path`
 - `/secrets/k/:path` (TODO)
-- `/secrets/:engine/:store/k/:path`
+- `/secrets/map/:engine/:store/k/:path`
 - `/render/k/:path`
 - `/policy/k/:path` (TODO)
