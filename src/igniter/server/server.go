@@ -3,9 +3,11 @@ package server
 import (
 	"bytes"
 	"encoding/json"
+	jsonpatch "github.com/evanphx/json-patch"
 	"github.com/gin-gonic/gin"
 	"github.com/igniter/config"
 	"github.com/igniter/http"
+	"github.com/igniter/secret"
 	"github.com/igniter/storage"
 	"github.com/valyala/fasttemplate"
 )
@@ -100,6 +102,30 @@ func (svr Server) DeleteSecretsMap(engine string, store string, path string) str
 	storeOpt := svr.GetStoreOptions(store)
 	secretsMapStore := storage.GetSecretsMapStore(storeOpt)
 	return secretsMapStore.DeleteSecretsMap(engine, path)
+}
+
+func (svr Server) GetSecrets(engine string, store string, path string,
+	userJsonOverrides string) string {
+	if engine == "" {
+		engine = "vault"
+	}
+
+	storeOpt := svr.GetStoreOptions(store)
+	secretsMapStore := storage.GetSecretsMapStore(storeOpt)
+	secretsMap := secretsMapStore.GetSecretsMap(engine, path)
+
+	merged, _ := jsonpatch.MergePatch([]byte(secretsMap), []byte(userJsonOverrides))
+
+	var opt map[string]interface{}
+	json.Unmarshal(merged, &opt)
+
+	secretOpt := svr.GetSecretsOptions(engine)
+	secretClient := secret.GetSecretClient(secretOpt, opt)
+
+	secret := secretClient.GetSecret(opt["path"].(string))
+
+	json, _ := json.Marshal(secret)
+	return string(json)
 }
 
 func (svr Server) GetStoreOptions(store string) config.StoreOptions {

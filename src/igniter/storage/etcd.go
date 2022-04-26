@@ -246,3 +246,10 @@ func stripInternalPrefix(key string) string {
 
 	return key
 }
+
+func createEtcdStore(opt config.StoreOptions) *EtcdStore {
+	var etcdOpt config.EtcdOptions
+	mapstructure.Decode(opt.Options, &etcdOpt)
+	store := etcdInitStore(etcdOpt)
+	return store
+}

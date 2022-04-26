@@ -29,6 +29,8 @@ func initRoutes(r *gin.Engine, svr Server) {
 	r.GET("/secrets/map/:engine/s/:store/k/*path", func(ctx *gin.Context) { getSecretsMapData(ctx, svr) })
 	r.DELETE("/secrets/map/:engine/s/:store/k/*path", func(ctx *gin.Context) { deleteSecretsMapData(ctx, svr) })
 
+	r.POST("/secrets/k/*path", func(ctx *gin.Context) { getSecretsData(ctx, svr) })
+
 	r.PUT("/:datatype/k/*path", func(ctx *gin.Context) { putUserData(ctx, svr) })
 	r.GET("/:datatype/k/*path", func(ctx *gin.Context) { getUserData(ctx, svr) })
 	r.DELETE("/:datatype/k/*path", func(ctx *gin.Context) { deleteUserData(ctx, svr) })
@@ -182,6 +184,17 @@ func deleteSecretsMapData(ctx *gin.Context, svr Server) {
 	store := ctx.Param("store")
 	result := svr.DeleteSecretsMap(engine, store, path)
 	ctx.String(http.StatusOK, result)
+}
+
+func getSecretsData(ctx *gin.Context, svr Server) {
+
+	path := ctx.Param("path")
+	engine := ctx.Param("engine")
+	store := ctx.Param("store")
+	userJsonOverrides, _ := ctx.GetRawData()
+
+	result := svr.GetSecrets(engine, store, path, string(userJsonOverrides))
+	ctx.Data(http.StatusOK, gin.MIMEJSON, []byte(result))
 }
 
 func render(ctx *gin.Context, svr Server) {

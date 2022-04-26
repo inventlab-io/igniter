@@ -2,7 +2,6 @@ package storage
 
 import (
 	"github.com/igniter/config"
-	"github.com/mitchellh/mapstructure"
 )
 
 type ConfigRepoFactory func(cfg config.ServerConfig) ConfigRepo
@@ -65,12 +64,5 @@ func GetSecretsMapStore(opt config.StoreOptions) SecretsMapStore {
 		store = createEtcdStore(opt)
 	}
 
-	return store
-}
-
-func createEtcdStore(opt config.StoreOptions) *EtcdStore {
-	var etcdOpt config.EtcdOptions
-	mapstructure.Decode(opt.Options, &etcdOpt)
-	store := etcdInitStore(etcdOpt)
 	return store
 }

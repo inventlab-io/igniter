@@ -112,10 +112,13 @@ curl --location --request POST 'localhost:8080/render/k/mytemplate' \
 }'
 ```
 
-**Secrets Value**
+**Secrets Map**
 ```jsonc
 {
-  "path": "/v1/secret/data/foo",
+  "path": "/secret/data/foo",
+  "options":{
+    "token": "xyz"
+  },
   "map":{
     "mysecret": "data.data.mysecret"
   }
