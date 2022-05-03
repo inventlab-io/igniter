@@ -9,6 +9,7 @@ import (
 	"github.com/igniter/http"
 	"github.com/igniter/secret"
 	"github.com/igniter/storage"
+	"github.com/spyzhov/ajson"
 	"github.com/valyala/fasttemplate"
 )
 
@@ -124,8 +125,37 @@ func (svr Server) GetSecrets(engine string, store string, path string,
 
 	secret := secretClient.GetSecret(opt["path"].(string))
 
-	json, _ := json.Marshal(secret)
-	return string(json)
+	jSecret, _ := json.Marshal(secret)
+	root, _ := ajson.Unmarshal(jSecret)
+
+	mapping := opt["map"].(map[string]interface{})
+	result := make(map[string]interface{})
+
+	for k, jsonPath := range mapping {
+
+		nodes, _ := root.JSONPath(jsonPath.(string))
+		size := len(nodes)
+
+		if size == 1 {
+			b, _ := ajson.Marshal(nodes[0])
+			var intf interface{}
+			json.Unmarshal(b, &intf)
+			result[k] = intf
+		} else if size > 1 {
+			var objArray []interface{}
+			for _, n := range nodes {
+				b, _ := ajson.Marshal(n)
+				var intf interface{}
+				json.Unmarshal(b, &intf)
+				objArray = append(objArray, intf)
+			}
+			result[k] = objArray
+		}
+	}
+
+	r, _ := json.Marshal(result)
+
+	return string(r)
 }
 
 func (svr Server) GetStoreOptions(store string) config.StoreOptions {
