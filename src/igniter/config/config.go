@@ -11,6 +11,16 @@ type StoreOptions struct {
 	Options map[string]interface{}
 }
 
+type VaultOptions struct {
+	Address string
+	Token   string
+}
+
+type SecretsOptions struct {
+	Type    string
+	Options map[string]interface{}
+}
+
 type ServerConfig struct {
 	Storage StoreOptions
 }

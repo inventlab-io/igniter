@@ -41,17 +41,32 @@ type EtcdStore struct {
 }
 
 func (e *EtcdStore) GetStoreOptions(key string) []byte {
-	optionsKey := parseOptionsKey(key)
+	optionsKey := parseStoreOptionsKey(key)
 	return e.getData(optionsKey)
 }
 
 func (e *EtcdStore) PutStoreOptions(key string, optionsJson string) string {
-	optionsKey := parseOptionsKey(key)
+	optionsKey := parseStoreOptionsKey(key)
 	return e.putData(optionsKey, optionsJson)
 }
 
 func (e *EtcdStore) DeleteStoreOptions(key string) string {
-	optionsKey := parseOptionsKey(key)
+	optionsKey := parseStoreOptionsKey(key)
+	return e.deleteData(optionsKey)
+}
+
+func (e *EtcdStore) GetSecretsOptions(key string) []byte {
+	optionsKey := parseSecretsOptionsKey(key)
+	return e.getData(optionsKey)
+}
+
+func (e *EtcdStore) PutSecretsOptions(key string, optionsJson string) string {
+	optionsKey := parseSecretsOptionsKey(key)
+	return e.putData(optionsKey, optionsJson)
+}
+
+func (e *EtcdStore) DeleteSecretsOptions(key string) string {
+	optionsKey := parseSecretsOptionsKey(key)
 	return e.deleteData(optionsKey)
 }
 
@@ -110,6 +125,24 @@ func (e *EtcdStore) DeleteValues(key string) string {
 	return e.deleteData(valuesKey)
 }
 
+// GetSecretsMap implements SecretsMapStore
+func (e EtcdStore) GetSecretsMap(engine string, key string) string {
+	secretsMapKey := parseSecretsMapKey(engine, key)
+	return string(e.getData(secretsMapKey))
+}
+
+// PutSecretsMap implements SecretsMapStore
+func (e *EtcdStore) PutSecretsMap(engine string, key string, values string) string {
+	secretsMapKey := parseSecretsMapKey(engine, key)
+	return e.putData(secretsMapKey, values)
+}
+
+// DeleteSecretsMap implements SecretsMapStore
+func (e *EtcdStore) DeleteSecretsMap(engine string, key string) string {
+	secretsMapKey := parseSecretsMapKey(engine, key)
+	return e.deleteData(secretsMapKey)
+}
+
 func (e *EtcdStore) getData(key string) []byte {
 	valuesMap := e.getDataInBatch([]string{key})
 	if len(valuesMap) > 0 {
@@ -154,6 +187,7 @@ func (e *EtcdStore) putData(key string, data string) string {
 
 	return "Ok"
 }
+
 func (e *EtcdStore) deleteData(key string) string {
 	_, err := e.client.KV.Delete(e.context, key)
 	defer e.client.Close()
@@ -174,8 +208,12 @@ func (e *EtcdStore) deleteData(key string) string {
 	return "Ok"
 }
 
-func parseOptionsKey(key string) string {
-	return fmt.Sprintf(":opt:%s", key)
+func parseStoreOptionsKey(key string) string {
+	return fmt.Sprintf(":opt_store:%s", key)
+}
+
+func parseSecretsOptionsKey(key string) string {
+	return fmt.Sprintf(":opt_secrets:%s", key)
 }
 
 func parseTemplateKey(key string) string {
@@ -186,11 +224,32 @@ func parseValuesKey(key string) string {
 	return fmt.Sprintf(":val:%s", key)
 }
 
+func parseSecretsMapKey(engine string, key string) string {
+	return fmt.Sprintf(":sec:%s:%s", engine, key)
+}
+
 func stripInternalPrefix(key string) string {
-	if strings.HasPrefix(key, ":opt:") || strings.HasPrefix(key, ":tpl:") || strings.HasPrefix(key, ":val:") {
+	if strings.HasPrefix(key, ":opt_store:") {
+		return key[11:]
+	} else if strings.HasPrefix(key, ":opt_secrets:") {
+		return key[13:]
+	} else if strings.HasPrefix(key, ":tpl:") ||
+		strings.HasPrefix(key, ":val:") {
 		return key[5:]
-	} else {
-		return key
+	} else if strings.HasPrefix(key, ":sec:") {
+		for i := 6; i < len(key); i++ {
+			if key[i] == ':' {
+				return key[i:]
+			}
+		}
 	}
 
+	return key
+}
+
+func createEtcdStore(opt config.StoreOptions) *EtcdStore {
+	var etcdOpt config.EtcdOptions
+	mapstructure.Decode(opt.Options, &etcdOpt)
+	store := etcdInitStore(etcdOpt)
+	return store
 }

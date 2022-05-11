@@ -3,11 +3,14 @@ package server
 import (
 	"bytes"
 	"encoding/json"
+	jsonpatch "github.com/evanphx/json-patch"
 	"github.com/gin-gonic/gin"
 	"github.com/igniter/config"
 	"github.com/igniter/http"
+	"github.com/igniter/secret"
 	"github.com/igniter/storage"
-	"text/template"
+	"github.com/spyzhov/ajson"
+	"github.com/valyala/fasttemplate"
 )
 
 type Server struct {
@@ -72,6 +75,89 @@ func (svr Server) DeleteValues(store string, path string) string {
 	return valuesStore.DeleteValues(path)
 }
 
+func (svr Server) GetSecretsMap(engine string, store string, path string) string {
+	if engine == "" {
+		engine = "vault"
+	}
+
+	storeOpt := svr.GetStoreOptions(store)
+	secretsMapStore := storage.GetSecretsMapStore(storeOpt)
+	return secretsMapStore.GetSecretsMap(engine, path)
+}
+
+func (svr Server) PutSecretsMap(engine string, store string, path string, values string) string {
+	if engine == "" {
+		engine = "vault"
+	}
+
+	storeOpt := svr.GetStoreOptions(store)
+	secretsMapStore := storage.GetSecretsMapStore(storeOpt)
+	return secretsMapStore.PutSecretsMap(engine, path, values)
+}
+
+func (svr Server) DeleteSecretsMap(engine string, store string, path string) string {
+	if engine == "" {
+		engine = "vault"
+	}
+
+	storeOpt := svr.GetStoreOptions(store)
+	secretsMapStore := storage.GetSecretsMapStore(storeOpt)
+	return secretsMapStore.DeleteSecretsMap(engine, path)
+}
+
+func (svr Server) GetSecrets(engine string, store string, path string,
+	userJsonOverrides string) string {
+	if engine == "" {
+		engine = "vault"
+	}
+
+	storeOpt := svr.GetStoreOptions(store)
+	secretsMapStore := storage.GetSecretsMapStore(storeOpt)
+	secretsMap := secretsMapStore.GetSecretsMap(engine, path)
+
+	merged, _ := jsonpatch.MergePatch([]byte(secretsMap), []byte(userJsonOverrides))
+
+	var opt map[string]interface{}
+	json.Unmarshal(merged, &opt)
+
+	secretOpt := svr.GetSecretsOptions(engine)
+	secretClient := secret.GetSecretClient(secretOpt, opt)
+
+	secret := secretClient.GetSecret(opt["path"].(string))
+
+	jSecret, _ := json.Marshal(secret)
+	root, _ := ajson.Unmarshal(jSecret)
+
+	mapping := opt["map"].(map[string]interface{})
+	result := make(map[string]interface{})
+
+	for k, jsonPath := range mapping {
+
+		nodes, _ := root.JSONPath(jsonPath.(string))
+		size := len(nodes)
+
+		if size == 1 {
+			b, _ := ajson.Marshal(nodes[0])
+			var intf interface{}
+			json.Unmarshal(b, &intf)
+			result[k] = intf
+		} else if size > 1 {
+			var objArray []interface{}
+			for _, n := range nodes {
+				b, _ := ajson.Marshal(n)
+				var intf interface{}
+				json.Unmarshal(b, &intf)
+				objArray = append(objArray, intf)
+			}
+			result[k] = objArray
+		}
+	}
+
+	r, _ := json.Marshal(result)
+
+	return string(r)
+}
+
 func (svr Server) GetStoreOptions(store string) config.StoreOptions {
 
 	var opt config.StoreOptions
@@ -107,12 +193,47 @@ func (svr Server) DeleteStoreOptions(store string) string {
 	return configRepo.DeleteStoreOptions(store)
 }
 
+func (svr Server) GetSecretsOptions(engine string) config.SecretsOptions {
+
+	var opt config.SecretsOptions
+	configRepo := svr.configRepoFactory(svr.config)
+
+	if engine == "" {
+		optJson := configRepo.GetSecretsOptions("default")
+		if optJson != nil {
+			json.Unmarshal(optJson, &opt)
+		}
+
+	} else {
+		optJson := configRepo.GetSecretsOptions(engine)
+		json.Unmarshal(optJson, &opt)
+	}
+
+	return opt
+}
+
+func (svr Server) PutSecretsOptions(engine string, optionsJson string) string {
+	configRepo := svr.configRepoFactory(svr.config)
+	if engine == "" {
+		engine = "default"
+	}
+	return configRepo.PutSecretsOptions(engine, optionsJson)
+}
+
+func (svr Server) DeleteSecretsOptions(engine string) string {
+	configRepo := svr.configRepoFactory(svr.config)
+	if engine == "" {
+		engine = "default"
+	}
+	return configRepo.DeleteSecretsOptions(engine)
+}
+
 func (svr Server) Render(store string, templatePath string, render RenderDto) (result string, ok bool) {
 
 	templateValueMap := make(map[string]interface{})
 	storeValueMap := prefetchValuesByBatch(render, svr)
 
-	t := svr.GetTemplate(store, templatePath)
+	rawTmpl := svr.GetTemplate(store, templatePath)
 
 	values := render.Values
 	for valueIndex := len(values) - 1; valueIndex >= 0; valueIndex-- {
@@ -133,18 +254,16 @@ func (svr Server) Render(store string, templatePath string, render RenderDto) (r
 				templateValueMap[k] = v
 			}
 		}
+
+		// parse and get values and secrets
+		// need to build a tree and prevent recursions
 	}
 
-	tmpl, err := template.New(templatePath).Parse(t)
+	tmpl := fasttemplate.New(rawTmpl, "{{", "}}")
 
-	if err != nil {
-		return "", false
-	} else {
-
-		buf := new(bytes.Buffer)
-		tmpl.Execute(buf, templateValueMap)
-		return buf.String(), true
-	}
+	buf := new(bytes.Buffer)
+	tmpl.Execute(buf, templateValueMap)
+	return buf.String(), true
 }
 
 func prefetchValuesByBatch(render RenderDto, svr Server) map[string]map[string]string {

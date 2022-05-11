@@ -9,12 +9,27 @@ import (
 
 func initRoutes(r *gin.Engine, svr Server) {
 
-	r.GET("/options/store", func(ctx *gin.Context) { getOptions(ctx, svr) })
-	r.PUT("/options/store", func(ctx *gin.Context) { putOptions(ctx, svr) })
-	r.DELETE("/options/store", func(ctx *gin.Context) { deleteOptions(ctx, svr) })
-	r.GET("/options/store/k/:store", func(ctx *gin.Context) { getOptions(ctx, svr) })
-	r.PUT("/options/store/k/:store", func(ctx *gin.Context) { putOptions(ctx, svr) })
-	r.DELETE("/options/store/k/:store", func(ctx *gin.Context) { deleteOptions(ctx, svr) })
+	r.GET("/options/store", func(ctx *gin.Context) { getStoreOptions(ctx, svr) })
+	r.PUT("/options/store", func(ctx *gin.Context) { putStoreOptions(ctx, svr) })
+	r.DELETE("/options/store", func(ctx *gin.Context) { deleteStoreOptions(ctx, svr) })
+	r.GET("/options/secrets/k/:engine", func(ctx *gin.Context) { getSecretsOptions(ctx, svr) })
+	r.PUT("/options/secrets/k/:engine", func(ctx *gin.Context) { putSecretsOptions(ctx, svr) })
+	r.DELETE("/options/secrets/k/:engine", func(ctx *gin.Context) { deleteSecretsOptions(ctx, svr) })
+
+	r.PUT("/secrets/map/k/*path", func(ctx *gin.Context) { putSecretsMapData(ctx, svr) })
+	r.GET("/secrets/map/k/*path", func(ctx *gin.Context) { getSecretsMapData(ctx, svr) })
+	r.DELETE("/secrets/map/k/*path", func(ctx *gin.Context) { deleteSecretsMapData(ctx, svr) })
+	r.PUT("/secrets/maps/:store/k/*path", func(ctx *gin.Context) { putSecretsMapData(ctx, svr) })
+	r.GET("/secrets/map/s/:store/k/*path", func(ctx *gin.Context) { getSecretsMapData(ctx, svr) })
+	r.DELETE("/secrets/map/s/:store/k/*path", func(ctx *gin.Context) { deleteSecretsMapData(ctx, svr) })
+	r.PUT("/secrets/map/:engine/k/*path", func(ctx *gin.Context) { putSecretsMapData(ctx, svr) })
+	r.GET("/secrets/map/:engine/k/*path", func(ctx *gin.Context) { getSecretsMapData(ctx, svr) })
+	r.DELETE("/secrets/map/:engine/k/*path", func(ctx *gin.Context) { deleteSecretsMapData(ctx, svr) })
+	r.PUT("/secrets/map/:engine/s/:store/k/*path", func(ctx *gin.Context) { putSecretsMapData(ctx, svr) })
+	r.GET("/secrets/map/:engine/s/:store/k/*path", func(ctx *gin.Context) { getSecretsMapData(ctx, svr) })
+	r.DELETE("/secrets/map/:engine/s/:store/k/*path", func(ctx *gin.Context) { deleteSecretsMapData(ctx, svr) })
+
+	r.POST("/secrets/k/*path", func(ctx *gin.Context) { getSecretsData(ctx, svr) })
 
 	r.PUT("/:datatype/k/*path", func(ctx *gin.Context) { putUserData(ctx, svr) })
 	r.GET("/:datatype/k/*path", func(ctx *gin.Context) { getUserData(ctx, svr) })
@@ -27,25 +42,47 @@ func initRoutes(r *gin.Engine, svr Server) {
 	r.POST("/render/:store/k/*path", func(ctx *gin.Context) { render(ctx, svr) })
 }
 
-func getOptions(ctx *gin.Context, svr Server) {
+func getStoreOptions(ctx *gin.Context, svr Server) {
 	store := ctx.Param("store")
 	result := svr.GetStoreOptions(store)
 	ctx.JSON(http.StatusOK, result)
 }
 
-func putOptions(ctx *gin.Context, svr Server) {
+func putStoreOptions(ctx *gin.Context, svr Server) {
 	store := ctx.Param("store")
 	options, err := ctx.GetRawData()
 	if err != nil {
-		fmt.Errorf("Malformed template option request")
+		fmt.Errorf("Malformed store option request")
 	}
 	result := svr.PutStoreOptions(store, string(options))
 	ctx.String(http.StatusOK, result)
 }
 
-func deleteOptions(ctx *gin.Context, svr Server) {
+func deleteStoreOptions(ctx *gin.Context, svr Server) {
 	store := ctx.Param("store")
 	result := svr.DeleteStoreOptions(store)
+	ctx.String(http.StatusOK, result)
+}
+
+func getSecretsOptions(ctx *gin.Context, svr Server) {
+	engine := ctx.Param("engine")
+	result := svr.GetSecretsOptions(engine)
+	ctx.JSON(http.StatusOK, result)
+}
+
+func putSecretsOptions(ctx *gin.Context, svr Server) {
+	engine := ctx.Param("engine")
+	options, err := ctx.GetRawData()
+	if err != nil {
+		fmt.Errorf("Malformed secret engine option request")
+	}
+	result := svr.PutSecretsOptions(engine, string(options))
+	ctx.String(http.StatusOK, result)
+}
+
+func deleteSecretsOptions(ctx *gin.Context, svr Server) {
+	engine := ctx.Param("engine")
+	result := svr.DeleteSecretsOptions(engine)
 	ctx.String(http.StatusOK, result)
 }
 
@@ -68,7 +105,7 @@ func putUserData(ctx *gin.Context, svr Server) {
 	if datatype == "template" {
 		result := svr.PutTemplate(store, path, string(rawData))
 		ctx.String(http.StatusOK, result)
-	} else {
+	} else if datatype == "values" {
 		result := svr.PutValues(store, path, string(rawData))
 		ctx.String(http.StatusOK, result)
 	}
@@ -89,7 +126,7 @@ func getUserData(ctx *gin.Context, svr Server) {
 	if datatype == "template" {
 		result := svr.GetTemplate(store, path)
 		ctx.String(http.StatusOK, result)
-	} else {
+	} else if datatype == "values" {
 		result := svr.GetValues(store, path)
 		ctx.String(http.StatusOK, result)
 	}
@@ -110,10 +147,54 @@ func deleteUserData(ctx *gin.Context, svr Server) {
 	if datatype == "template" {
 		result := svr.DeleteTemplate(store, path)
 		ctx.String(http.StatusOK, result)
-	} else {
+	} else if datatype == "values" {
 		result := svr.DeleteValues(store, path)
 		ctx.String(http.StatusOK, result)
 	}
+}
+
+func putSecretsMapData(ctx *gin.Context, svr Server) {
+
+	path := ctx.Param("path")
+	engine := ctx.Param("engine")
+	store := ctx.Param("store")
+	rawData, err := ctx.GetRawData()
+	if err != nil {
+		fmt.Errorf("Error putting rawData %s", path)
+	}
+
+	result := svr.PutSecretsMap(engine, store, path, string(rawData))
+	ctx.String(http.StatusOK, result)
+}
+
+func getSecretsMapData(ctx *gin.Context, svr Server) {
+
+	path := ctx.Param("path")
+	engine := ctx.Param("engine")
+	store := ctx.Param("store")
+
+	result := svr.GetSecretsMap(engine, store, path)
+	ctx.String(http.StatusOK, result)
+}
+
+func deleteSecretsMapData(ctx *gin.Context, svr Server) {
+
+	path := ctx.Param("path")
+	engine := ctx.Param("engine")
+	store := ctx.Param("store")
+	result := svr.DeleteSecretsMap(engine, store, path)
+	ctx.String(http.StatusOK, result)
+}
+
+func getSecretsData(ctx *gin.Context, svr Server) {
+
+	path := ctx.Param("path")
+	engine := ctx.Param("engine")
+	store := ctx.Param("store")
+	userJsonOverrides, _ := ctx.GetRawData()
+
+	result := svr.GetSecrets(engine, store, path, string(userJsonOverrides))
+	ctx.Data(http.StatusOK, gin.MIMEJSON, []byte(result))
 }
 
 func render(ctx *gin.Context, svr Server) {
