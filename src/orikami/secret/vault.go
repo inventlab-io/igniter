@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	vault "github.com/hashicorp/vault/api"
-	"github.com/igniter/config"
 	"github.com/imdario/mergo"
 	"github.com/mitchellh/mapstructure"
+	"github.com/orikami/config"
 	"log"
 )
 

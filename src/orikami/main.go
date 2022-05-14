@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/igniter/command"
+	"github.com/orikami/command"
 	"os"
 )
 

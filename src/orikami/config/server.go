@@ -26,7 +26,7 @@ func LoadServerConfig(path string) (cfg ServerConfig, err error) {
 
 		fn := strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
 		if fn == "" {
-			fn = "igniter"
+			fn = "orikami"
 		}
 
 		agentV.SetConfigName(fn)

@@ -3,8 +3,8 @@ package command
 import (
 	"flag"
 	"fmt"
-	"github.com/igniter/agent"
-	"github.com/igniter/config"
+	"github.com/orikami/agent"
+	"github.com/orikami/config"
 	"io"
 	"log"
 )
@@ -41,5 +41,5 @@ func (a AgentCommand) Run(args []string) int {
 }
 
 func (a AgentCommand) Synopsis() string {
-	return "Start Igniter Agent"
+	return "Start Orikami Agent"
 }
