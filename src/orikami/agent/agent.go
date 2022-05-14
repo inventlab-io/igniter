@@ -2,7 +2,7 @@ package agent
 
 import (
 	"fmt"
-	"github.com/igniter/config"
+	"github.com/orikami/config"
 )
 
 func Run(cfg config.AgentConfig) {

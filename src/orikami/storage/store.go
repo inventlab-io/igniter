@@ -1,7 +1,7 @@
 package storage
 
 import (
-	"github.com/igniter/config"
+	"github.com/orikami/config"
 )
 
 type ConfigRepoFactory func(cfg config.ServerConfig) ConfigRepo

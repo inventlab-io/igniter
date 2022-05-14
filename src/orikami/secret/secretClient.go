@@ -1,7 +1,7 @@
 package secret
 
 import (
-	"github.com/igniter/config"
+	"github.com/orikami/config"
 )
 
 type SecretClient interface {

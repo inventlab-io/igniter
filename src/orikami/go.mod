@@ -1,4 +1,4 @@
-module github.com/igniter
+module github.com/orikami
 
 go 1.18
 
@@ -98,4 +98,4 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
-replace github.com/igniter => ../igniter/src
+replace github.com/orikami => ../orikami/src

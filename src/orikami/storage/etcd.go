@@ -3,8 +3,8 @@ package storage
 import (
 	"context"
 	"fmt"
-	"github.com/igniter/config"
 	"github.com/mitchellh/mapstructure"
+	"github.com/orikami/config"
 	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"log"
